@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"golang.org/x/image/font/basicfont"
 )
 
 var (
@@ -85,4 +86,18 @@ func schreibeFont(x, y uint16, s string) {
 	op.GeoM.Translate(float64(x), float64(y))
 	op.ColorScale.ScaleWithColor(gibStiftfarbe())
 	text.Draw(drawTarget, s, face, op)
+}
+
+// stdFace ist ein eingebauter Bitmap-Font (7x13) für Schreibe(),
+// damit auch ohne vorheriges SetzeFont() Text ausgegeben werden kann.
+var stdFace *text.GoXFace
+
+func schreibe(x, y uint16, s string) {
+	if stdFace == nil {
+		stdFace = text.NewGoXFace(basicfont.Face7x13)
+	}
+	op := &text.DrawOptions{}
+	op.GeoM.Translate(float64(x), float64(y))
+	op.ColorScale.ScaleWithColor(gibStiftfarbe())
+	text.Draw(drawTarget, s, stdFace, op)
 }

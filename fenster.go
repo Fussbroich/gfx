@@ -3,6 +3,7 @@ package gfx
 // fenster.go — Fensterverwaltung, Ebitengine-Game-Loop, Double-Buffering.
 
 import (
+	"image"
 	"image/color"
 	"sync"
 	"sync/atomic"
@@ -38,12 +39,25 @@ var (
 
 	// Für Sperren/Entsperren (benutzerseitig)
 	zeichenSperre sync.Mutex
+
+	// Ebitengine erlaubt pro Prozess nur ein RunGame. Deshalb bleibt der
+	// Loop nach dem ersten Fenster() aktiv. FensterAus() schließt nur
+	// logisch; ein erneutes Fenster() passt lediglich die Größe an.
+	gameGestartet atomic.Bool
+
+	// Zwischenspeicher für Archivieren/Restaurieren.
+	archivBuf *ebiten.Image
 )
 
 // ===================== ebiten.Game =====================
 
 func (g *gfxGame) Update() error {
-	if !offen.Load() {
+	// Der Loop endet erst, wenn der Benutzer das Fenster wirklich schließt
+	// (Klick auf das X). FensterAus() setzt nur -offen- auf false und beendet
+	// den Loop NICHT, damit das Fenster später wieder geöffnet bzw. in der
+	// Größe geändert werden kann (Ebitengine erlaubt kein zweites RunGame).
+	if ebiten.IsWindowBeingClosed() {
+		offen.Store(false)
 		return ebiten.Termination
 	}
 	updateEingabe()
@@ -68,13 +82,24 @@ func (g *gfxGame) Layout(_, _ int) (int, int) {
 func fensterStarten(breite, hoehe uint16) {
 	fensterBreite = breite
 	fensterHoehe = hoehe
-	fensterBereit = make(chan struct{})
-	fensterDone = make(chan struct{})
 
+	// Zeichenpuffer in der (evtl. neuen) Größe anlegen.
 	frontBuf = ebiten.NewImage(int(breite), int(hoehe))
 	backBuf = ebiten.NewImage(int(breite), int(hoehe))
 	drawTarget = frontBuf
+	archivBuf = nil
 
+	if gameGestartet.Load() {
+		// Der RunGame-Loop läuft bereits: nur die Fenstergröße anpassen.
+		// (Layout() liefert dynamisch fensterBreite/fensterHoehe.)
+		offen.Store(true)
+		ebiten.SetWindowSize(int(breite), int(hoehe))
+		return
+	}
+
+	gameGestartet.Store(true)
+	fensterBereit = make(chan struct{})
+	fensterDone = make(chan struct{})
 	initEingabe()
 
 	go func() {
@@ -86,7 +111,7 @@ func fensterStarten(breite, hoehe uint16) {
 
 		_ = ebiten.RunGame(&gfxGame{})
 
-		// Aufräumen nach Ende des Game-Loops
+		// Aufräumen nach Ende des Game-Loops (Fenster wurde geschlossen)
 		offen.Store(false)
 		close(fensterDone)
 	}()
@@ -101,14 +126,11 @@ func istFensterOffen() bool {
 }
 
 func fensterSchliessen() {
-	if offen.Load() {
-		offen.Store(false)
-		// Warte, bis der Game-Loop beendet ist
-		select {
-		case <-fensterDone:
-		case <-time.After(2 * time.Second):
-		}
-	}
+	// Nur logisch schließen: -offen- auf false setzen. Der RunGame-Loop läuft
+	// weiter (er darf pro Prozess nur einmal gestartet werden). Das Fenster
+	// verschwindet, wenn der Prozess endet (z. B. nach os.Exit) oder wird mit
+	// einem erneuten Fenster()-Aufruf in der Größe angepasst.
+	offen.Store(false)
 }
 
 func setzeFenstertitel(s string) {
@@ -141,4 +163,32 @@ func updateAn() {
 	frontBuf, backBuf = backBuf, frontBuf
 	bufMu.Unlock()
 	drawTarget = frontBuf
+}
+
+func gibGrafikspalten() uint16 { return fensterBreite }
+
+func gibGrafikzeilen() uint16 { return fensterHoehe }
+
+// archivieren sichert den aktuellen Zeicheninhalt in einem Zwischenspeicher.
+func archivieren() {
+	if archivBuf == nil {
+		archivBuf = ebiten.NewImage(int(fensterBreite), int(fensterHoehe))
+	}
+	archivBuf.Clear()
+	archivBuf.DrawImage(drawTarget, nil)
+}
+
+// restaurieren kopiert den Bereich (x,y,b,h) aus dem Zwischenspeicher zurück.
+func restaurieren(x, y, b, h uint16) {
+	if archivBuf == nil {
+		return
+	}
+	r := image.Rect(int(x), int(y), int(x)+int(b), int(y)+int(h))
+	sub, ok := archivBuf.SubImage(r).(*ebiten.Image)
+	if !ok {
+		return
+	}
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(x), float64(y))
+	drawTarget.DrawImage(sub, op)
 }

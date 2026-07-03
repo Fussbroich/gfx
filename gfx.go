@@ -23,6 +23,12 @@ func FensterAus() { fensterSchliessen() }
 // Fenstertitel setzt den Titel in der Titelleiste des Fensters.
 func Fenstertitel(s string) { setzeFenstertitel(s) }
 
+// Grafikspalten liefert die Breite des Fensters in Pixeln.
+func Grafikspalten() uint16 { return gibGrafikspalten() }
+
+// Grafikzeilen liefert die Höhe des Fensters in Pixeln.
+func Grafikzeilen() uint16 { return gibGrafikzeilen() }
+
 // ===================== Zeichensteuerung =====================
 
 // Cls füllt das gesamte Fenster mit der aktuellen Stiftfarbe.
@@ -34,6 +40,14 @@ func UpdateAus() { updateAus() }
 
 // UpdateAn zeigt alle seit UpdateAus gepufferten Zeichenbefehle an.
 func UpdateAn() { updateAn() }
+
+// Archivieren sichert den gesamten aktuellen Fensterinhalt in einem
+// Zwischenspeicher (siehe Restaurieren).
+func Archivieren() { archivieren() }
+
+// Restaurieren kopiert den rechteckigen Bereich (x,y) mit Breite b und Höhe h
+// aus dem mit Archivieren gesicherten Zwischenspeicher zurück ins Fenster.
+func Restaurieren(x, y, b, h uint16) { restaurieren(x, y, b, h) }
 
 // Stiftfarbe setzt die Zeichenfarbe im RGB-Modell (je 0–255).
 func Stiftfarbe(r, g, b uint8) { setzeStiftfarbe(r, g, b) }
@@ -59,6 +73,12 @@ func Kreis(x, y, r uint16) { kreis(x, y, r) }
 // Vollkreis zeichnet einen ausgefüllten Kreis um (x,y) mit Radius r.
 func Vollkreis(x, y, r uint16) { vollkreis(x, y, r) }
 
+// Ellipse zeichnet einen Ellipsenumriss um (x,y) mit Halbachsen rx und ry.
+func Ellipse(x, y, rx, ry uint16) { ellipse(x, y, rx, ry) }
+
+// Vollellipse zeichnet eine ausgefüllte Ellipse um (x,y) mit Halbachsen rx und ry.
+func Vollellipse(x, y, rx, ry uint16) { vollellipse(x, y, rx, ry) }
+
 // Rechteck zeichnet einen Rechteckumriss bei (x1,y1) mit Breite b und Höhe h.
 func Rechteck(x1, y1, b, h uint16) { rechteck(x1, y1, b, h) }
 
@@ -75,6 +95,11 @@ func Vollkreissektor(x, y, r, w1, w2 uint16) { vollkreissektor(x, y, r, w1, w2) 
 func Volldreieck(x1, y1, x2, y2, x3, y3 uint16) { volldreieck(x1, y1, x2, y2, x3, y3) }
 
 // ===================== Textausgabe =====================
+
+// Schreibe schreibt Text an Position (x,y) mit einem eingebauten
+// Standardfont — ohne dass zuvor SetzeFont aufgerufen werden muss.
+// (x,y) ist die obere linke Ecke des Textes.
+func Schreibe(x, y uint16, s string) { schreibe(x, y, s) }
 
 // SetzeFont lädt eine TTF-Datei als aktuellen Zeichensatz.
 // Liefert true bei Erfolg.

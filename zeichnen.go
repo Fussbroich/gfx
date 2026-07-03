@@ -149,6 +149,34 @@ func volldreieck(x1, y1, x2, y2, x3, y3 uint16) {
 	pfadFuellen(gibStiftfarbe())
 }
 
+// ===================== Ellipsen =====================
+// Mittelpunkt (cx,cy), horizontale Halbachse rx, vertikale Halbachse ry.
+
+func ellipsepfad(cx, cy, rx, ry float32) {
+	sp.Reset()
+	for i := 0; i <= kreisSegmente; i++ {
+		a := float64(i) * 2 * math.Pi / kreisSegmente
+		px := cx + rx*float32(math.Cos(a))
+		py := cy + ry*float32(math.Sin(a))
+		if i == 0 {
+			sp.MoveTo(px, py)
+		} else {
+			sp.LineTo(px, py)
+		}
+	}
+	sp.Close()
+}
+
+func ellipse(x, y, rx, ry uint16) {
+	ellipsepfad(float32(x), float32(y), float32(rx), float32(ry))
+	pfadUmriss(gibStiftfarbe(), 1)
+}
+
+func vollellipse(x, y, rx, ry uint16) {
+	ellipsepfad(float32(x), float32(y), float32(rx), float32(ry))
+	pfadFuellen(gibStiftfarbe())
+}
+
 // ===================== Hilfsfunktion =====================
 
 func farbeAufVertices(vs []ebiten.Vertex, clr color.NRGBA) {
