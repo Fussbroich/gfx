@@ -1,0 +1,23 @@
+# .gitignore für das Go-Modul gfx
+# Hält vom Compiler erzeugte Dateien aus dem Repository heraus.
+
+# Ausführbare Programme / Plugins (z. B. von `go build`)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test-Binary (von `go test -c`)
+*.test
+
+# Ausgabe des Coverage-Werkzeugs
+*.out
+
+# Go-Workspace-Dateien
+go.work
+go.work.sum
+
+# Betriebssystem-Müll
+.DS_Store
+Thumbs.db
