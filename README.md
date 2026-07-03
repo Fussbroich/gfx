@@ -94,7 +94,7 @@ Wer von der klassischen SDL-/Server-Fassung kommt:
 
 ## Verwandtes
 
-Auf dieser `gfx` baut u. a. **robiw** auf — der 2D-Lernroboter „Robi" in einer
+Auf dieser `gfx` baut u. a. **robi** auf — der 2D-Lernroboter „Robi" in einer
 Kachelwelt, mit dem sich das Entwerfen von Algorithmen üben lässt.
 
 ---
